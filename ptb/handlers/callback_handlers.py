@@ -19,6 +19,13 @@ async def handler_main_menu(update, context):
             reply_markup=keyboard.master_menu()
         )
         return states_bot.SELECT_MASTER
+    
+    elif query.data == 'send_feedback':
+        await query.message.edit_text(
+            text='Выберите мастера, о котором хотите оставить отзыв',
+            reply_markup=keyboard.feedback_menu()
+        )
+        return states_bot.SELECT_MASTER_TO_FEEDBACK
 
 
 async def handler_salon_menu(update, context):
@@ -172,6 +179,62 @@ async def handler_master_menu(update, context):
         return states_bot.SELECT_PROCEDURE
 
     elif query.data == 'back_to_main':
+        await query.message.edit_text(
+            'Главное меню',
+            reply_markup=keyboard.main_menu()
+        )
+        return states_bot.MAIN_MENU
+    
+
+async def handler_master_feedback_menu(update, context):
+    query = update.callback_query
+    await query.answer()
+
+    if query.data.startswith('master_'):
+        await query.message.edit_text('Введите отзыв о мастере Мастер1')
+        return states_bot.CLIENT_FEEDBACK
+
+    if query.data == 'back_to_main':
+        await query.message.edit_text(
+            'Главное меню',
+            reply_markup=keyboard.main_menu()
+        )
+        return states_bot.MAIN_MENU
+
+
+async def handler_feedback_menu(update, context):
+    if update.message and update.message.text:
+        await update.message.reply_text(
+            'Отправить отзыв?',
+            reply_markup=keyboard.confirm_feedback()
+        )
+        return states_bot.CONFIRM_FEEDBACK_MENU
+
+
+async def handler_confirm_feedback_menu(update, context):
+    query = update.callback_query
+    await query.answer()
+
+    if query.data == 'send':
+        await query.message.edit_text(
+            'Отзыв отправлен.',
+            reply_markup=keyboard.back_to_main_menu()
+        )
+        return states_bot.AFTER_FEEDBACK
+
+    elif query.data == 'cancel':
+        await query.message.edit_text(
+            'Отмена отправки отзыва.',
+            reply_markup=keyboard.back_to_main_menu()
+        )
+        return states_bot.AFTER_FEEDBACK
+
+    
+async def handler_after_feedback(update, context):
+    query = update.callback_query
+    await query.answer()
+
+    if query.data == 'back_to_main':
         await query.message.edit_text(
             'Главное меню',
             reply_markup=keyboard.main_menu()

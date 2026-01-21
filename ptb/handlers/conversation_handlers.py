@@ -9,7 +9,8 @@ from .callback_handlers import (
     handler_main_menu, handler_salon_menu, handler_procedure_menu,
     handler_date_menu, handler_time_menu, handler_name_menu,
     handler_phone_menu, handler_promo_menu, handler_appointment_menu,
-    handler_after_appointment, handler_master_menu
+    handler_after_appointment, handler_master_menu, handler_master_feedback_menu,
+    handler_feedback_menu, handler_confirm_feedback_menu, handler_after_feedback,
 )
 from . import cmd_handlers, states_bot
 
@@ -32,7 +33,11 @@ conversation_handler = ConversationHandler(
         ],
         states_bot.APPOINTMENT: [CallbackQueryHandler(handler_appointment_menu)],
         states_bot.AFTER_APPOINTMENT: [CallbackQueryHandler(handler_after_appointment)],
-        states_bot.SELECT_MASTER: [CallbackQueryHandler(handler_master_menu)]
+        states_bot.SELECT_MASTER: [CallbackQueryHandler(handler_master_menu)],
+        states_bot.SELECT_MASTER_TO_FEEDBACK: [CallbackQueryHandler(handler_master_feedback_menu)],
+        states_bot.CLIENT_FEEDBACK: [MessageHandler(filters.TEXT & ~filters.COMMAND, handler_feedback_menu)],
+        states_bot.CONFIRM_FEEDBACK_MENU: [CallbackQueryHandler(handler_confirm_feedback_menu)],
+        states_bot.AFTER_FEEDBACK: [CallbackQueryHandler(handler_after_feedback)],
     },
     fallbacks=[CommandHandler('start', cmd_handlers.start)]
 )

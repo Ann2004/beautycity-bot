@@ -4,7 +4,8 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 def main_menu():
     keyboard = [
         [InlineKeyboardButton('Выбрать салон', callback_data='select_salon')],
-        [InlineKeyboardButton('Запись к мастеру', callback_data='select_master')]
+        [InlineKeyboardButton('Запись к мастеру', callback_data='select_master')],
+        [InlineKeyboardButton('Оставить отзыв', callback_data='send_feedback')],
     ]
 
     return InlineKeyboardMarkup(keyboard)
@@ -23,6 +24,24 @@ def master_menu():
     keyboard = [
         [InlineKeyboardButton('Мастер', callback_data='master_1')],
         [InlineKeyboardButton('Назад', callback_data='back_to_main')]
+    ]
+
+    return InlineKeyboardMarkup(keyboard)
+
+
+def feedback_menu():
+    keyboard = [
+        [InlineKeyboardButton('Мастер', callback_data='master_1')],
+        [InlineKeyboardButton('Назад', callback_data='back_to_main')]
+    ]
+
+    return InlineKeyboardMarkup(keyboard)
+
+
+def confirm_feedback():
+    keyboard = [
+        [InlineKeyboardButton('Отравить', callback_data='send')],
+        [InlineKeyboardButton('Отменить', callback_data='cancel')]
     ]
 
     return InlineKeyboardMarkup(keyboard)

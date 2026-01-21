@@ -100,6 +100,22 @@ def appointment_menu():
     return InlineKeyboardMarkup(keyboard)
 
 
+def appointment_with_promocode_menu():
+    keyboard = [
+        [InlineKeyboardButton('Подтвердрить запись', callback_data='confirm_appointment')],
+        [InlineKeyboardButton('У меня есть промокод', callback_data='have_promocode')],
+        [InlineKeyboardButton('Отменить запись', callback_data='cancel_appointment')]
+    ]
+
+    return InlineKeyboardMarkup(keyboard)
+
+
+def back_to_appointment_menu():
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton('Назад', callback_data='back_to_appointment')]
+    ])
+
+
 def back_to_main_menu():
     keyboard = [
         [InlineKeyboardButton('Вернуться в главное меню', callback_data='back_to_main')]

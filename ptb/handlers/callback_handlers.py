@@ -19,7 +19,7 @@ async def handler_main_menu(update, context):
             reply_markup=keyboard.master_menu()
         )
         return states_bot.SELECT_MASTER
-    
+
     elif query.data == 'send_feedback':
         await query.message.edit_text(
             text='Выберите мастера, о котором хотите оставить отзыв',
@@ -111,29 +111,10 @@ async def handler_name_menu(update, context):
 
 async def handler_phone_menu(update, context):
     await update.message.reply_text(
-        'Введите промокод',
-        reply_markup=keyboard.promocode_menu()
+        'Информация без промокода',
+        reply_markup=keyboard.appointment_with_promocode_menu()
     )
-    return states_bot.PROMO
-
-
-async def handler_promo_menu(update, context):
-    if update.callback_query and update.callback_query.data == 'skip_promo':
-        query = update.callback_query
-        await query.answer()
-
-        await query.message.edit_text(
-            'Информация выбора клиента без промокода',
-            reply_markup=keyboard.appointment_menu()
-        )
-        return states_bot.APPOINTMENT
-
-    elif update.message and update.message.text:
-        await update.message.reply_text(
-            'Информация выбора клиента с промокодом',
-            reply_markup=keyboard.appointment_menu()
-        )
-        return states_bot.APPOINTMENT
+    return states_bot.APPOINTMENT
 
 
 async def handler_appointment_menu(update, context):
@@ -153,6 +134,23 @@ async def handler_appointment_menu(update, context):
             reply_markup=keyboard.back_to_main_menu()
         )
         return states_bot.AFTER_APPOINTMENT
+
+    elif query.data == 'have_promocode':
+        await query.message.edit_text(
+            'Введите промокод',
+            reply_markup=keyboard.back_to_appointment_menu()
+        )
+        return states_bot.ADD_PROMO
+
+
+async def handler_add_promo(update, context):
+    if update.message and update.message.text:
+
+        await update.message.reply_text(
+            'Информация с промокодом',
+            reply_markup=keyboard.appointment_menu()
+        )
+        return states_bot.APPOINTMENT
 
 
 async def handler_after_appointment(update, context):
@@ -184,7 +182,7 @@ async def handler_master_menu(update, context):
             reply_markup=keyboard.main_menu()
         )
         return states_bot.MAIN_MENU
-    
+
 
 async def handler_master_feedback_menu(update, context):
     query = update.callback_query
@@ -229,7 +227,7 @@ async def handler_confirm_feedback_menu(update, context):
         )
         return states_bot.AFTER_FEEDBACK
 
-    
+
 async def handler_after_feedback(update, context):
     query = update.callback_query
     await query.answer()

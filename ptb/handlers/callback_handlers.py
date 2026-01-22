@@ -33,6 +33,7 @@ async def handler_salon_menu(update, context):
     await query.answer()
 
     if query.data.startswith('salon_'):
+        context.user_data['salon'] = query.data.split('_')[1]  # сохранение id для удобства
         await query.message.edit_text(
             'Выберите процедуру',
             reply_markup=keyboard.procedure_menu()
@@ -52,6 +53,7 @@ async def handler_procedure_menu(update, context):
     await query.answer()
 
     if query.data.startswith('procedure_'):
+        context.user_data['procedure'] = query.data.split('_')[1]
         await query.message.edit_text(
             'Выберите дату',
             reply_markup=keyboard.date_menu()
@@ -71,6 +73,7 @@ async def handler_date_menu(update, context):
     await query.answer()
 
     if query.data.startswith('date_'):
+        context.user_data['date'] = query.data.split('_')[1]  # 'yyyy-mm-dd'
         await query.message.edit_text(
             'Выберите время',
             reply_markup=keyboard.time_menu()
@@ -90,6 +93,7 @@ async def handler_time_menu(update, context):
     await query.answer()
 
     if query.data.startswith('time_'):
+        context.user_data['time'] = query.data.split('_')[1]  # 'hh:mm'
         await query.delete_message()
         with open('opd/opd.pdf', 'rb') as pdf_file:
             await query.message.reply_document(
@@ -112,6 +116,8 @@ async def handler_opd_menu(update, context):
     await query.answer()
 
     if query.data == 'agree':
+        # сюда добавить сохр, что пользователь уже соглашался
+        # (для того кто уже был зареган)
         await query.delete_message()
         await query.message.reply_text(
             'Введите фио',
@@ -119,6 +125,7 @@ async def handler_opd_menu(update, context):
         return states_bot.CLIENT_NAME
 
     elif query.data == 'disagree':
+        context.user_data.clear()  # очистка т.к. возврат в главное меню
         await query.delete_message()
         await query.message.reply_text(
             'Главное меню',
@@ -128,11 +135,13 @@ async def handler_opd_menu(update, context):
 
 
 async def handler_name_menu(update, context):
+    context.user_data['name'] = update.message.text
     await update.message.reply_text('Введите номер телефона')
     return states_bot.CLIENT_PHONENUMBER
 
 
 async def handler_phone_menu(update, context):
+    context.user_data['phone'] = update.message.text
     await update.message.reply_text(
         'Информация без промокода',
         reply_markup=keyboard.appointment_with_promocode_menu()
@@ -149,9 +158,12 @@ async def handler_appointment_menu(update, context):
             'Запись подтверждена',
             reply_markup=keyboard.back_to_main_menu()
         )
+        # тут нужно сохранить в бд
+        context.user_data.clear()
         return states_bot.AFTER_APPOINTMENT
 
     elif query.data == 'cancel_appointment':
+        context.user_data.clear()
         await query.message.edit_text(
             'Запись отменена',
             reply_markup=keyboard.back_to_main_menu()
@@ -168,7 +180,7 @@ async def handler_appointment_menu(update, context):
 
 async def handler_add_promo(update, context):
     if update.message and update.message.text:
-
+        context.user_data['promocode'] = update.message.text
         await update.message.reply_text(
             'Информация с промокодом',
             reply_markup=keyboard.appointment_menu()
@@ -193,6 +205,7 @@ async def handler_master_menu(update, context):
     await query.answer()
 
     if query.data.startswith('master_'):
+        context.user_data['master'] = query.data.split('_')[1]
         await query.message.edit_text(
             'Выберите процедуру',
             reply_markup=keyboard.procedure_menu()
@@ -212,6 +225,7 @@ async def handler_master_feedback_menu(update, context):
     await query.answer()
 
     if query.data.startswith('master_'):
+        context.user_data['feedback_master'] = query.data.split('_')[1]
         await query.message.edit_text('Введите отзыв о мастере Мастер1')
         return states_bot.CLIENT_FEEDBACK
 
@@ -225,6 +239,7 @@ async def handler_master_feedback_menu(update, context):
 
 async def handler_feedback_menu(update, context):
     if update.message and update.message.text:
+        context.user_data['feedback'] = update.message.text
         await update.message.reply_text(
             'Отправить отзыв?',
             reply_markup=keyboard.confirm_feedback()
@@ -237,13 +252,23 @@ async def handler_confirm_feedback_menu(update, context):
     await query.answer()
 
     if query.data == 'send':
+        # feedback  сохранить в бд
+        feedback = {
+            'master': context.user_data['feedback_master'],
+            'feedback': context.user_data['feedback']
+        }
         await query.message.edit_text(
             'Отзыв отправлен.',
             reply_markup=keyboard.back_to_main_menu()
         )
+
+        context.user_data.pop('feedback_master', None)
+        context.user_data.pop('feedback_text', None)
         return states_bot.AFTER_FEEDBACK
 
     elif query.data == 'cancel':
+        context.user_data.pop('feedback_master', None)
+        context.user_data.pop('feedback_text', None)
         await query.message.edit_text(
             'Отмена отправки отзыва.',
             reply_markup=keyboard.back_to_main_menu()

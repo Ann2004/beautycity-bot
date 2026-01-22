@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 
@@ -57,10 +58,29 @@ def procedure_menu():
 
 
 def date_menu():
-    keyboard = [
-        [InlineKeyboardButton('dd.mm.yyyy', callback_data='date_yyyy-mm-dd')],
-        [InlineKeyboardButton('Назад', callback_data='back_to_procedure')]
-    ]
+    today = datetime.now().date()
+    keyboard = []
+    days_added = 0
+    current_date = today
+
+    while days_added < 7:  # набор 7 дней
+        weekday = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вск'][current_date.weekday()]
+        date_str = current_date.strftime('%d.%m')
+
+        if current_date == today:
+            text = 'Сегодня'
+        elif current_date == today + timedelta(days=1):
+            text = 'Завтра'
+        else:
+            text = f'{date_str} {weekday}'
+
+        callback_data = f'date_{current_date.strftime("%Y-%m-%d")}'
+        keyboard.append([InlineKeyboardButton(text, callback_data=callback_data)])
+
+        days_added += 1
+        current_date += timedelta(days=1)
+
+    keyboard.append([InlineKeyboardButton('Назад', callback_data='back_to_procedure')])
 
     return InlineKeyboardMarkup(keyboard)
 

@@ -33,7 +33,7 @@ async def handler_salon_menu(update, context):
     await query.answer()
 
     if query.data.startswith('salon_'):
-        context.user_data['salon'] = query.data.split('_')[1]  # сохранение id для удобства
+        context.user_data['salon_id'] = query.data.split('_')[1]  # сохранение id для удобства
         await query.message.edit_text(
             'Выберите процедуру',
             reply_markup=keyboard.procedure_menu()
@@ -41,8 +41,14 @@ async def handler_salon_menu(update, context):
         return states_bot.SELECT_PROCEDURE
 
     elif query.data == 'back_to_main':
+        text = (
+            'Вас приветствует бот салонов красоты BeautyCity\n\n'
+            'Вы можете выбрать салон, мастера и оставить отзыв\n\n'
+            'Если у вас возникли трудности или вам нужна консультация:\n'
+            'Телефон для связи с нами: +79801234567'
+        )
         await query.message.edit_text(
-            'Главное меню',
+            text=text,
             reply_markup=keyboard.main_menu()
         )
         return states_bot.MAIN_MENU
@@ -53,9 +59,9 @@ async def handler_procedure_menu(update, context):
     await query.answer()
 
     if query.data.startswith('procedure_'):
-        context.user_data['procedure'] = query.data.split('_')[1]
+        context.user_data['procedure_id'] = query.data.split('_')[1]
         await query.message.edit_text(
-            'Выберите дату',
+            'Выберите удобную вам дату',
             reply_markup=keyboard.date_menu()
         )
         return states_bot.SELECT_DATE
@@ -105,7 +111,7 @@ async def handler_time_menu(update, context):
 
     elif query.data == 'back_to_date':
         await query.message.edit_text(
-            'Выберите дату',
+            'Выберите удобную вам дату',
             reply_markup=keyboard.date_menu()
         )
         return states_bot.SELECT_DATE
@@ -127,8 +133,14 @@ async def handler_opd_menu(update, context):
     elif query.data == 'disagree':
         context.user_data.clear()  # очистка т.к. возврат в главное меню
         await query.delete_message()
+        text = (
+            'Вас приветствует бот салонов красоты BeautyCity\n\n'
+            'Вы можете выбрать салон, мастера и оставить отзыв\n\n'
+            'Если у вас возникли трудности или вам нужна консультация:\n'
+            'Телефон для связи с нами: +79801234567'
+        )
         await query.message.reply_text(
-            'Главное меню',
+            text=text,
             reply_markup=keyboard.main_menu()
         )
         return states_bot.MAIN_MENU
@@ -193,8 +205,14 @@ async def handler_after_appointment(update, context):
     await query.answer()
 
     if query.data == 'back_to_main':
+        text = (
+            'Вас приветствует бот салонов красоты BeautyCity\n\n'
+            'Вы можете выбрать салон, мастера и оставить отзыв\n\n'
+            'Если у вас возникли трудности или вам нужна консультация:\n'
+            'Телефон для связи с нами: +79801234567'
+        )
         await query.message.edit_text(
-            'Главное меню',
+            text=text,
             reply_markup=keyboard.main_menu()
         )
         return states_bot.MAIN_MENU
@@ -205,7 +223,7 @@ async def handler_master_menu(update, context):
     await query.answer()
 
     if query.data.startswith('master_'):
-        context.user_data['master'] = query.data.split('_')[1]
+        context.user_data['master_id'] = query.data.split('_')[1]
         await query.message.edit_text(
             'Выберите процедуру',
             reply_markup=keyboard.procedure_menu()
@@ -213,8 +231,14 @@ async def handler_master_menu(update, context):
         return states_bot.SELECT_PROCEDURE
 
     elif query.data == 'back_to_main':
+        text = (
+            'Вас приветствует бот салонов красоты BeautyCity\n\n'
+            'Вы можете выбрать салон, мастера и оставить отзыв\n\n'
+            'Если у вас возникли трудности или вам нужна консультация:\n'
+            'Телефон для связи с нами: +79801234567'
+        )
         await query.message.edit_text(
-            'Главное меню',
+            text=text,
             reply_markup=keyboard.main_menu()
         )
         return states_bot.MAIN_MENU
@@ -225,13 +249,19 @@ async def handler_master_feedback_menu(update, context):
     await query.answer()
 
     if query.data.startswith('master_'):
-        context.user_data['feedback_master'] = query.data.split('_')[1]
+        context.user_data['feedback_master_id'] = query.data.split('_')[1]
         await query.message.edit_text('Введите отзыв о мастере Мастер1')
         return states_bot.CLIENT_FEEDBACK
 
     if query.data == 'back_to_main':
+        text = (
+            'Вас приветствует бот салонов красоты BeautyCity\n\n'
+            'Вы можете выбрать салон, мастера и оставить отзыв\n\n'
+            'Если у вас возникли трудности или вам нужна консультация:\n'
+            'Телефон для связи с нами: +79801234567'
+        )
         await query.message.edit_text(
-            'Главное меню',
+            text=text,
             reply_markup=keyboard.main_menu()
         )
         return states_bot.MAIN_MENU
@@ -254,7 +284,7 @@ async def handler_confirm_feedback_menu(update, context):
     if query.data == 'send':
         # feedback  сохранить в бд
         feedback = {
-            'master': context.user_data['feedback_master'],
+            'master': context.user_data['feedback_master_id'],
             'feedback': context.user_data['feedback']
         }
         await query.message.edit_text(
@@ -262,12 +292,12 @@ async def handler_confirm_feedback_menu(update, context):
             reply_markup=keyboard.back_to_main_menu()
         )
 
-        context.user_data.pop('feedback_master', None)
+        context.user_data.pop('feedback_master_id', None)
         context.user_data.pop('feedback_text', None)
         return states_bot.AFTER_FEEDBACK
 
     elif query.data == 'cancel':
-        context.user_data.pop('feedback_master', None)
+        context.user_data.pop('feedback_master_id', None)
         context.user_data.pop('feedback_text', None)
         await query.message.edit_text(
             'Отмена отправки отзыва.',
@@ -281,8 +311,14 @@ async def handler_after_feedback(update, context):
     await query.answer()
 
     if query.data == 'back_to_main':
+        text = (
+            'Вас приветствует бот салонов красоты BeautyCity\n\n'
+            'Вы можете выбрать салон, мастера и оставить отзыв\n\n'
+            'Если у вас возникли трудности или вам нужна консультация:\n'
+            'Телефон для связи с нами: +79801234567'
+        )
         await query.message.edit_text(
-            'Главное меню',
+            text=text,
             reply_markup=keyboard.main_menu()
         )
         return states_bot.MAIN_MENU

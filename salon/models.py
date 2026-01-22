@@ -35,6 +35,24 @@ class Salon(models.Model):
     def __str__(self):
         return f'{self.name} ({self.address})'
 
+class Service(models.Model):
+    name = models.CharField(
+        verbose_name='Название услуги',
+        max_length=255
+    )
+    price = models.DecimalField(
+        verbose_name='Стоимость',
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0)]
+    )
+    duration = models.PositiveIntegerField(
+        verbose_name='Длительность (мин)'
+    )
+
+    def __str__(self):
+        return self.name
+
 class Staff(models.Model):
     name = models.CharField(
         verbose_name='Имя мастера',
@@ -49,24 +67,6 @@ class Staff(models.Model):
         Service,
         verbose_name='Услуги',
         blank=True
-    )
-
-    def __str__(self):
-        return self.name
-
-class Service(models.Model):
-    name = models.CharField(
-        verbose_name='Название услуги',
-        max_length=255
-    )
-    price = models.DecimalField(
-        verbose_name='Стоимость',
-        max_digits=10,
-        decimal_places=2,
-        validators=[MinValueValidator(0)]
-    )
-    duration = models.PositiveIntegerField(
-        verbose_name='Длительность (мин)'
     )
 
     def __str__(self):

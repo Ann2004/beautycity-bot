@@ -79,7 +79,7 @@ async def handler_date_menu(update, context):
 
     elif query.data == 'back_to_procedure':
         await query.message.edit_text(
-            'Выберите дату',
+            'Выберите процедуру',
             reply_markup=keyboard.procedure_menu()
         )
         return states_bot.SELECT_PROCEDURE
@@ -90,18 +90,41 @@ async def handler_time_menu(update, context):
     await query.answer()
 
     if query.data.startswith('time_'):
-        await query.message.edit_text(
-            'Введите фио',
-            reply_markup=None
-        )
-        return states_bot.CLIENT_NAME
+        await query.delete_message()
+        with open('opd/opd.pdf', 'rb') as pdf_file:
+            await query.message.reply_document(
+                document=pdf_file,
+                caption='Нам нужно ваше согласие на обработку данных, т.к. нам потребуется ваше фио и номер телефона',
+                reply_markup=keyboard.opd_menu()
+            )
+        return states_bot.OPD
 
     elif query.data == 'back_to_date':
         await query.message.edit_text(
-            'Выберите время',
+            'Выберите дату',
             reply_markup=keyboard.date_menu()
         )
         return states_bot.SELECT_DATE
+
+
+async def handler_opd_menu(update, context):
+    query = update.callback_query
+    await query.answer()
+
+    if query.data == 'agree':
+        await query.delete_message()
+        await query.message.reply_text(
+            'Введите фио',
+        )
+        return states_bot.CLIENT_NAME
+
+    elif query.data == 'disagree':
+        await query.delete_message()
+        await query.message.reply_text(
+            'Главное меню',
+            reply_markup=keyboard.main_menu()
+        )
+        return states_bot.MAIN_MENU
 
 
 async def handler_name_menu(update, context):

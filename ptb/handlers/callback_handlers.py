@@ -67,11 +67,20 @@ async def handler_procedure_menu(update, context):
         return states_bot.SELECT_DATE
 
     elif query.data == 'back_to_salon':
-        await query.message.edit_text(
-            'Выберите салон',
-            reply_markup=keyboard.salon_menu()
-        )
-        return states_bot.SELECT_SALON
+        if context.user_data.get('master_id'):
+            context.user_data.pop('master_id', None)
+            await query.message.edit_text(
+                'Мастер, дата работы и салон',
+                reply_markup=keyboard.master_menu()
+            )
+            return states_bot.SELECT_MASTER
+
+        else:
+            await query.message.edit_text(
+                'Выберите салон',
+                reply_markup=keyboard.salon_menu()
+            )
+            return states_bot.SELECT_SALON
 
 
 async def handler_date_menu(update, context):

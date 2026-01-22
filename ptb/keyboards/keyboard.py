@@ -86,10 +86,16 @@ def date_menu():
 
 
 def time_menu():
+    times = [f"{hour:02d}:00" for hour in range(10, 20)]
     keyboard = [
-        [InlineKeyboardButton('hh:mm', callback_data='time_hh:mm')],
-        [InlineKeyboardButton('Назад', callback_data='back_to_date')]
+        [
+            InlineKeyboardButton(times[i], callback_data=f'time_{times[i]}'),
+            InlineKeyboardButton(times[i+1], callback_data=f'time_{times[i+1]}')
+        ]
+        for i in range(0, len(times), 2)
     ]
+
+    keyboard.append([InlineKeyboardButton('Назад', callback_data='back_to_date')])
 
     return InlineKeyboardMarkup(keyboard)
 

@@ -110,10 +110,14 @@ async def handler_time_menu(update, context):
     if query.data.startswith('time_'):
         context.user_data['time'] = query.data.split('_')[1]  # 'hh:mm'
         await query.delete_message()
+        text = (
+            'Нам нужно ваше согласие на обработку данных,'
+            'т.к. нам потребуется ваше фио и номер телефона'
+        )
         with open('opd/opd.pdf', 'rb') as pdf_file:
             await query.message.reply_document(
                 document=pdf_file,
-                caption='Нам нужно ваше согласие на обработку данных, т.к. нам потребуется ваше фио и номер телефона',
+                caption=text,
                 reply_markup=keyboard.opd_menu()
             )
         return states_bot.OPD
@@ -157,17 +161,33 @@ async def handler_opd_menu(update, context):
 
 async def handler_name_menu(update, context):
     context.user_data['name'] = update.message.text
-    await update.message.reply_text('Введите номер телефона')
+    text = (
+        'Введите номер телефона начиная с 8 или 7'
+        'Пример 79801234567'
+    )
+    await update.message.reply_text(text=text)
     return states_bot.CLIENT_PHONENUMBER
 
 
 async def handler_phone_menu(update, context):
-    context.user_data['phone'] = update.message.text
-    await update.message.reply_text(
-        'Информация без промокода',
-        reply_markup=keyboard.appointment_with_promocode_menu()
-    )
-    return states_bot.APPOINTMENT
+    phone = ''.join(filter(str.isdigit, update.message.text))  # получение только цифр из строки для проверки номера телефона
+
+    if len(phone) == 11 and phone[0] in ['7', '8']:
+        context.user_data['phone'] = update.message.text
+        await update.message.reply_text(
+            'Информация без промокода',
+            reply_markup=keyboard.appointment_with_promocode_menu()
+        )
+        return states_bot.APPOINTMENT
+
+    else:
+        text = (
+            'Некорректно введён номер, попробуйте еще раз\n\n'
+            'Введите номер телефона начиная с 8 или 7\n'
+            'Пример: 79801234567'
+        )
+        await update.message.reply_text(text=text)
+        return states_bot.CLIENT_PHONENUMBER
 
 
 async def handler_appointment_menu(update, context):

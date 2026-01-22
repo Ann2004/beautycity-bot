@@ -122,11 +122,3 @@ def back_to_main_menu():
     ]
 
     return InlineKeyboardMarkup(keyboard)
-
-
-def opd_menu():
-    keyboard = [
-        [InlineKeyboardButton('Согласиться', callback_data='agree')],
-        [InlineKeyboardButton('Отказаться', callback_data='disagree')]
-    ]
-    return InlineKeyboardMarkup(keyboard)

@@ -174,8 +174,17 @@ async def handler_phone_menu(update, context):
 
     if len(phone) == 11 and phone[0] in ['7', '8']:
         context.user_data['phone'] = update.message.text
+        text = (
+            f'Салон {context.user_data.get("salon_id", "id салона")}\n'
+            f'Процедура {context.user_data.get("procedure_id", "id процедуры")}\n'
+            f'Мастер {context.user_data.get("master_id", "id мастера")}\n'
+            f'Дата {context.user_data.get("date", "Дата")}\n'
+            f'Время {context.user_data.get("time", "Время")}\n\n'
+            'Стоимость xxxx р.\n\n'
+            'Подтвердить запись?'
+        )
         await update.message.reply_text(
-            'Информация без промокода',
+            text=text,
             reply_markup=keyboard.appointment_with_promocode_menu()
         )
         return states_bot.APPOINTMENT
@@ -222,8 +231,18 @@ async def handler_appointment_menu(update, context):
 async def handler_add_promo(update, context):
     if update.message and update.message.text:
         context.user_data['promocode'] = update.message.text
+        text = (
+            f'Салон {context.user_data.get("salon_id", "id салона")}\n'
+            f'Процедура {context.user_data.get("procedure_id", "id процедуры")}\n'
+            f'Мастер {context.user_data.get("master_id", "id мастера")}\n'
+            f'Дата {context.user_data.get("date", "Дата")}\n'
+            f'Время {context.user_data.get("time", "Время")}\n'
+            f'Промокод {context.user_data.get("promocode", "Промокод")}\n\n'
+            'Стоимость xxxx*скидку промокода р.\n\n'
+            'Подтвердить запись?'
+        )
         await update.message.reply_text(
-            'Информация с промокодом',
+            text=text,
             reply_markup=keyboard.appointment_menu()
         )
         return states_bot.APPOINTMENT

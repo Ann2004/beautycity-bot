@@ -38,5 +38,6 @@ conversation_handler = ConversationHandler(
         states_bot.AFTER_FEEDBACK: [CallbackQueryHandler(handler_after_feedback)],
         states_bot.OPD: [CallbackQueryHandler(handler_opd_menu)]
     },
-    fallbacks=[CommandHandler('start', cmd_handlers.start)]
+    fallbacks=[CommandHandler('start', cmd_handlers.start)],
+    per_message=False
 )

@@ -293,12 +293,12 @@ async def handler_confirm_feedback_menu(update, context):
         )
 
         context.user_data.pop('feedback_master_id', None)
-        context.user_data.pop('feedback_text', None)
+        context.user_data.pop('feedback', None)
         return states_bot.AFTER_FEEDBACK
 
     elif query.data == 'cancel':
         context.user_data.pop('feedback_master_id', None)
-        context.user_data.pop('feedback_text', None)
+        context.user_data.pop('feedback', None)
         await query.message.edit_text(
             'Отмена отправки отзыва.',
             reply_markup=keyboard.back_to_main_menu()

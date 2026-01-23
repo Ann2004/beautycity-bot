@@ -22,7 +22,7 @@ async def handler_main_menu(update, context):
 
     elif query.data == 'send_feedback':
         await query.message.edit_text(
-            text='Выберите мастера, о котором хотите оставить отзыв',
+            text='Выберите мастера, о котором хотите оставить отзыв.',
             reply_markup=keyboard.feedback_menu()
         )
         return states_bot.SELECT_MASTER_TO_FEEDBACK
@@ -42,8 +42,8 @@ async def handler_salon_menu(update, context):
 
     elif query.data == 'back_to_main':
         text = (
-            'Вас приветствует бот салонов красоты BeautyCity\n\n'
-            'Вы можете выбрать салон, мастера и оставить отзыв\n\n'
+            'Вас приветствует бот салонов красоты BeautyCity.\n\n'
+            'Вы можете выбрать салон или мастера, чтобы записаться, а также оставить отзыв.\n\n'
             'Если у вас возникли трудности или вам нужна консультация:\n'
             'Телефон для связи с нами: +79801234567'
         )
@@ -112,7 +112,7 @@ async def handler_time_menu(update, context):
         await query.delete_message()
         text = (
             'Нам нужно ваше согласие на обработку данных,'
-            'т.к. нам потребуется ваше фио и номер телефона'
+            ' т.к. нам потребуется ваше ФИО и номер телефона.'
         )
         with open('opd/opd.pdf', 'rb') as pdf_file:
             await query.message.reply_document(
@@ -147,8 +147,8 @@ async def handler_opd_menu(update, context):
         context.user_data.clear()  # очистка т.к. возврат в главное меню
         await query.delete_message()
         text = (
-            'Вас приветствует бот салонов красоты BeautyCity\n\n'
-            'Вы можете выбрать салон, мастера и оставить отзыв\n\n'
+            'Вас приветствует бот салонов красоты BeautyCity.\n\n'
+            'Вы можете выбрать салон или мастера, чтобы записаться, а также оставить отзыв\n\n'
             'Если у вас возникли трудности или вам нужна консультация:\n'
             'Телефон для связи с нами: +79801234567'
         )
@@ -162,8 +162,8 @@ async def handler_opd_menu(update, context):
 async def handler_name_menu(update, context):
     context.user_data['name'] = update.message.text
     text = (
-        'Введите номер телефона начиная с 8 или 7'
-        'Пример 79801234567'
+        'Введите номер телефона, начиная с 8 или 7.\n'
+        'Пример: 79801234567'
     )
     await update.message.reply_text(text=text)
     return states_bot.CLIENT_PHONENUMBER
@@ -191,8 +191,8 @@ async def handler_phone_menu(update, context):
 
     else:
         text = (
-            'Некорректно введён номер, попробуйте еще раз\n\n'
-            'Введите номер телефона начиная с 8 или 7\n'
+            'Некорректно введён номер, попробуйте еще раз.\n\n'
+            'Введите номер телефона, начиная с 8 или 7.\n'
             'Пример: 79801234567'
         )
         await update.message.reply_text(text=text)
@@ -254,8 +254,8 @@ async def handler_after_appointment(update, context):
 
     if query.data == 'back_to_main':
         text = (
-            'Вас приветствует бот салонов красоты BeautyCity\n\n'
-            'Вы можете выбрать салон, мастера и оставить отзыв\n\n'
+            'Вас приветствует бот салонов красоты BeautyCity.\n\n'
+            'Вы можете выбрать салон или мастера, чтобы записаться, а также оставить отзыв.\n\n'
             'Если у вас возникли трудности или вам нужна консультация:\n'
             'Телефон для связи с нами: +79801234567'
         )
@@ -280,8 +280,8 @@ async def handler_master_menu(update, context):
 
     elif query.data == 'back_to_main':
         text = (
-            'Вас приветствует бот салонов красоты BeautyCity\n\n'
-            'Вы можете выбрать салон, мастера и оставить отзыв\n\n'
+            'Вас приветствует бот салонов красоты BeautyCity.\n\n'
+            'Вы можете выбрать салон или мастера, чтобы записаться, а также оставить отзыв.\n\n'
             'Если у вас возникли трудности или вам нужна консультация:\n'
             'Телефон для связи с нами: +79801234567'
         )
@@ -298,13 +298,13 @@ async def handler_master_feedback_menu(update, context):
 
     if query.data.startswith('master_'):
         context.user_data['feedback_master_id'] = query.data.split('_')[1]
-        await query.message.edit_text('Введите отзыв о мастере Мастер1')
+        await query.message.edit_text(f'Введите отзыв о мастере {context.user_data.get("feedback_master_id")}.')
         return states_bot.CLIENT_FEEDBACK
 
     if query.data == 'back_to_main':
         text = (
-            'Вас приветствует бот салонов красоты BeautyCity\n\n'
-            'Вы можете выбрать салон, мастера и оставить отзыв\n\n'
+            'Вас приветствует бот салонов красоты BeautyCity.\n\n'
+            'Вы можете выбрать салон или мастера, чтобы записаться, а также оставить отзыв.\n\n'
             'Если у вас возникли трудности или вам нужна консультация:\n'
             'Телефон для связи с нами: +79801234567'
         )
@@ -336,7 +336,10 @@ async def handler_confirm_feedback_menu(update, context):
             'feedback': context.user_data['feedback']
         }
         await query.message.edit_text(
-            'Отзыв отправлен.',
+            f'''Ваш отзыв отправлен.
+
+Мастер: {feedback['master']}
+Отзыв:\n{feedback['feedback']}''',
             reply_markup=keyboard.back_to_main_menu()
         )
 
@@ -360,8 +363,8 @@ async def handler_after_feedback(update, context):
 
     if query.data == 'back_to_main':
         text = (
-            'Вас приветствует бот салонов красоты BeautyCity\n\n'
-            'Вы можете выбрать салон, мастера и оставить отзыв\n\n'
+            'Вас приветствует бот салонов красоты BeautyCity.\n\n'
+            'Вы можете выбрать салон или мастера, чтобы записаться, а также оставить отзыв.\n\n'
             'Если у вас возникли трудности или вам нужна консультация:\n'
             'Телефон для связи с нами: +79801234567'
         )

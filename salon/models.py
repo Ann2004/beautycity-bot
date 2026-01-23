@@ -17,6 +17,7 @@ class Client(models.Model):
     def __str__(self):
         return f'{self.name} ({self.phone})'
 
+
 class Salon(models.Model):
     name = models.CharField(
         verbose_name='Имя салона',
@@ -35,6 +36,7 @@ class Salon(models.Model):
     def __str__(self):
         return f'{self.name} ({self.address})'
 
+
 class Service(models.Model):
     name = models.CharField(
         verbose_name='Название услуги',
@@ -52,6 +54,7 @@ class Service(models.Model):
 
     def __str__(self):
         return self.name
+
 
 class Staff(models.Model):
     name = models.CharField(
@@ -72,6 +75,7 @@ class Staff(models.Model):
     def __str__(self):
         return self.name
 
+
 class Promo(models.Model):
     code = models.CharField(
         verbose_name='Промокод',
@@ -87,7 +91,8 @@ class Promo(models.Model):
 
     def __str__(self):
         return self.code
-         
+
+
 class Appointment(models.Model):
     client = models.ForeignKey(
         Client,
@@ -100,7 +105,7 @@ class Appointment(models.Model):
         verbose_name='Услуга'
     )
     staff = models.ForeignKey(
-         Staff,
+        Staff,
         on_delete=models.CASCADE,
         verbose_name='Мастер'
     )
@@ -109,6 +114,7 @@ class Appointment(models.Model):
 
     def __str__(self):
         return f'{self.client} — {self.service} ({self.appointment_date} {self.time})'
+
 
 class Feedback(models.Model):
     feedback = models.TextField(

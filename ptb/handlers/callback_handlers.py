@@ -3,7 +3,7 @@ from ptb.keyboards import keyboard
 
 from salon.services import ( 
     get_or_create_client, create_feedback, get_all_staff,
-    get_staff_by_id
+    get_staff_by_id, get_all_salons, get_all_services
 )
 
 
@@ -12,16 +12,20 @@ async def handler_main_menu(update, context):
     await query.answer()
 
     if query.data == 'select_salon':
+        salon_list = await get_all_salons()
+
         await query.message.edit_text(
             text='Выберите салон',
-            reply_markup=keyboard.salon_menu()
+            reply_markup=keyboard.salon_menu(salon_list)
         )
         return states_bot.SELECT_SALON
 
     elif query.data == 'select_master':
+        staff_list = await get_all_staff()
+
         await query.message.edit_text(
             text='Мастер, дата работы и салон',
-            reply_markup=keyboard.master_menu()
+            reply_markup=keyboard.master_menu(staff_list)
         )
         return states_bot.SELECT_MASTER
 
@@ -40,10 +44,12 @@ async def handler_salon_menu(update, context):
     await query.answer()
 
     if query.data.startswith('salon_'):
+        procedures_list = await get_all_services()
+
         context.user_data['salon_id'] = query.data.split('_')[1]  # сохранение id для удобства
         await query.message.edit_text(
             'Выберите процедуру',
-            reply_markup=keyboard.procedure_menu()
+            reply_markup=keyboard.procedure_menu(procedures_list)
         )
         return states_bot.SELECT_PROCEDURE
 
@@ -74,18 +80,23 @@ async def handler_procedure_menu(update, context):
         return states_bot.SELECT_DATE
 
     elif query.data == 'back_to_salon':
+
         if context.user_data.get('master_id'):
+            master_list = await get_all_staff()
+
             context.user_data.pop('master_id', None)
             await query.message.edit_text(
                 'Мастер, дата работы и салон',
-                reply_markup=keyboard.master_menu()
+                reply_markup=keyboard.master_menu(master_list)
             )
             return states_bot.SELECT_MASTER
 
         else:
+            salons_list = await get_all_salons()
+            
             await query.message.edit_text(
                 'Выберите салон',
-                reply_markup=keyboard.salon_menu()
+                reply_markup=keyboard.salon_menu(salons_list)
             )
             return states_bot.SELECT_SALON
 
@@ -103,9 +114,11 @@ async def handler_date_menu(update, context):
         return states_bot.SELECT_TIME
 
     elif query.data == 'back_to_procedure':
+        procedures_list = await get_all_services()
+
         await query.message.edit_text(
             'Выберите процедуру',
-            reply_markup=keyboard.procedure_menu()
+            reply_markup=keyboard.procedure_menu(procedures_list)
         )
         return states_bot.SELECT_PROCEDURE
 
@@ -278,10 +291,12 @@ async def handler_master_menu(update, context):
     await query.answer()
 
     if query.data.startswith('master_'):
+        procedures_list = await get_all_services()
+
         context.user_data['master_id'] = query.data.split('_')[1]
         await query.message.edit_text(
             'Выберите процедуру',
-            reply_markup=keyboard.procedure_menu()
+            reply_markup=keyboard.procedure_menu(procedures_list)
         )
         return states_bot.SELECT_PROCEDURE
 

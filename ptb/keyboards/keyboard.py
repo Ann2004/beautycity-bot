@@ -12,20 +12,38 @@ def main_menu():
     return InlineKeyboardMarkup(keyboard)
 
 
-def salon_menu():
-    keyboard = [
-        [InlineKeyboardButton('Название салона и адрес', callback_data='salon_1')],
-        [InlineKeyboardButton('Назад', callback_data='back_to_main')]
-    ]
+def salon_menu(salon_list):
+    keyboard = []
+
+    for salon in salon_list:
+        keyboard.append([
+            InlineKeyboardButton(
+                text=salon.address,
+                callback_data=f'salon_{salon.id}'
+            )
+        ])
+
+    keyboard.append([
+        InlineKeyboardButton('Назад', callback_data='back_to_main')
+    ])
 
     return InlineKeyboardMarkup(keyboard)
 
 
-def master_menu():
-    keyboard = [
-        [InlineKeyboardButton('Мастер', callback_data='master_1')],
-        [InlineKeyboardButton('Назад', callback_data='back_to_main')]
-    ]
+def master_menu(master_list):
+    keyboard = []
+
+    for master in master_list:
+        keyboard.append([
+            InlineKeyboardButton(
+                text=f'{master.name} ({master.salon.address})',
+                callback_data=f'master_{master.id}'
+            )
+        ])
+
+    keyboard.append([
+        InlineKeyboardButton('Назад', callback_data='back_to_main')
+    ])
 
     return InlineKeyboardMarkup(keyboard)
 
@@ -36,7 +54,7 @@ def feedback_staff_menu(staff_list):
     for staff in staff_list:
         keyboard.append([
             InlineKeyboardButton(
-                text=f'{staff.name} ({staff.salon.address})',
+                text=staff.name,
                 callback_data=f'master_{staff.id}'
             )
         ])
@@ -57,12 +75,20 @@ def confirm_feedback():
     return InlineKeyboardMarkup(keyboard)
 
 
-def procedure_menu():
-    keyboard = [
-        [InlineKeyboardButton('Название процедуры и стоимость', callback_data='procedure_1')],
-        [InlineKeyboardButton('Назад', callback_data='back_to_salon')]
-    ]
+def procedure_menu(procedures_list):
+    keyboard = []
 
+    for procedure in procedures_list:
+        keyboard.append([
+            InlineKeyboardButton(
+                text=f'{procedure.name} ({procedure.price} р.)',
+                callback_data=f'procedure_{procedure.id}'
+            )
+        ])
+
+    keyboard.append([
+        InlineKeyboardButton('Назад', callback_data='back_to_salon')
+    ])
     return InlineKeyboardMarkup(keyboard)
 
 

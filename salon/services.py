@@ -1,5 +1,5 @@
 from asgiref.sync import sync_to_async
-from salon.models import Client, Staff, Feedback
+from salon.models import Client, Staff, Feedback, Salon, Service
 
 
 @sync_to_async
@@ -36,3 +36,13 @@ def get_all_staff():
 @sync_to_async
 def get_staff_by_id(staff_id: int) -> Staff:
     return Staff.objects.filter(id=staff_id).first()
+
+
+@sync_to_async
+def get_all_salons():
+    return list(Salon.objects.all())
+
+
+@sync_to_async
+def get_all_services():
+    return list(Service.objects.all())

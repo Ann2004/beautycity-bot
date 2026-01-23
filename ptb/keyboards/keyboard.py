@@ -30,11 +30,20 @@ def master_menu():
     return InlineKeyboardMarkup(keyboard)
 
 
-def feedback_menu():
-    keyboard = [
-        [InlineKeyboardButton('Мастер', callback_data='master_1')],
-        [InlineKeyboardButton('Назад', callback_data='back_to_main')]
-    ]
+def feedback_staff_menu(staff_list):
+    keyboard = []
+
+    for staff in staff_list:
+        keyboard.append([
+            InlineKeyboardButton(
+                text=f'{staff.name} ({staff.salon.address})',
+                callback_data=f'master_{staff.id}'
+            )
+        ])
+
+    keyboard.append([
+        InlineKeyboardButton('Назад', callback_data='back_to_main')
+    ])
 
     return InlineKeyboardMarkup(keyboard)
 

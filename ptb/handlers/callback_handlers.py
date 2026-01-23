@@ -1,6 +1,11 @@
 from . import states_bot
 from ptb.keyboards import keyboard
 
+from salon.services import ( 
+    get_or_create_client, create_feedback, get_all_staff,
+    get_staff_by_id
+)
+
 
 async def handler_main_menu(update, context):
     query = update.callback_query
@@ -21,9 +26,11 @@ async def handler_main_menu(update, context):
         return states_bot.SELECT_MASTER
 
     elif query.data == 'send_feedback':
+        staff_list = await get_all_staff()
+
         await query.message.edit_text(
             text='Выберите мастера, о котором хотите оставить отзыв.',
-            reply_markup=keyboard.feedback_menu()
+            reply_markup=keyboard.feedback_staff_menu(staff_list)
         )
         return states_bot.SELECT_MASTER_TO_FEEDBACK
 
@@ -297,8 +304,15 @@ async def handler_master_feedback_menu(update, context):
     await query.answer()
 
     if query.data.startswith('master_'):
-        context.user_data['feedback_master_id'] = query.data.split('_')[1]
-        await query.message.edit_text(f'Введите отзыв о мастере {context.user_data.get("feedback_master_id")}.')
+        master_id = int(query.data.split('_')[1])
+
+        master = await get_staff_by_id(master_id)  # сервис
+        context.user_data['feedback_master_id'] = master.id
+        context.user_data['feedback_master_name'] = master.name
+
+        await query.message.edit_text(
+            f'Введите отзыв о мастере {master.name}'
+        )
         return states_bot.CLIENT_FEEDBACK
 
     if query.data == 'back_to_main':
@@ -316,13 +330,42 @@ async def handler_master_feedback_menu(update, context):
 
 
 async def handler_feedback_menu(update, context):
-    if update.message and update.message.text:
-        context.user_data['feedback'] = update.message.text
+    context.user_data['feedback'] = update.message.text
+
+    await update.message.reply_text(
+        'Введите ваше ФИО'
+    )
+    return states_bot.FEEDBACK_CLIENT_NAME
+
+
+async def handler_feedback_client_name(update, context):
+    context.user_data['feedback_name'] = update.message.text
+
+    await update.message.reply_text(
+        'Введите номер телефона (7XXXXXXXXXX или 8XXXXXXXXXX).'
+    )
+    return states_bot.FEEDBACK_CLIENT_PHONE
+
+
+async def handler_feedback_client_phone(update, context):
+    phone = ''.join(filter(str.isdigit, update.message.text))
+
+    if len(phone) != 11 or phone[0] not in ('7', '8'):
         await update.message.reply_text(
-            'Отправить отзыв?',
-            reply_markup=keyboard.confirm_feedback()
+            'Некорректный номер. Попробуйте ещё раз'
         )
-        return states_bot.CONFIRM_FEEDBACK_MENU
+        return states_bot.FEEDBACK_CLIENT_PHONE
+
+    context.user_data['feedback_phone'] = phone
+
+    await update.message.reply_text(
+        f'''Мастер: {context.user_data['feedback_master_name']}
+Отзыв:
+{context.user_data['feedback']}''',
+        reply_markup=keyboard.confirm_feedback()
+    )
+
+    return states_bot.CONFIRM_FEEDBACK_MENU
 
 
 async def handler_confirm_feedback_menu(update, context):
@@ -330,28 +373,29 @@ async def handler_confirm_feedback_menu(update, context):
     await query.answer()
 
     if query.data == 'send':
-        # feedback  сохранить в бд
-        feedback = {
-            'master': context.user_data['feedback_master_id'],
-            'feedback': context.user_data['feedback']
-        }
-        await query.message.edit_text(
-            f'''Ваш отзыв отправлен.
+        client = await get_or_create_client(
+            name=context.user_data['feedback_name'],
+            phone=context.user_data['feedback_phone']
+        )
 
-Мастер: {feedback['master']}
-Отзыв:\n{feedback['feedback']}''',
+        await create_feedback(
+            staff_id=int(context.user_data['feedback_master_id']),
+            client=client,
+            text=context.user_data['feedback']
+        )
+
+        await query.message.edit_text(
+            'Спасибо! Ваш отзыв сохранён.',
             reply_markup=keyboard.back_to_main_menu()
         )
 
-        context.user_data.pop('feedback_master_id', None)
-        context.user_data.pop('feedback', None)
+        context.user_data.clear()
         return states_bot.AFTER_FEEDBACK
 
     elif query.data == 'cancel':
-        context.user_data.pop('feedback_master_id', None)
-        context.user_data.pop('feedback', None)
+        context.user_data.clear()
         await query.message.edit_text(
-            'Отмена отправки отзыва.',
+            'Отзыв отменён',
             reply_markup=keyboard.back_to_main_menu()
         )
         return states_bot.AFTER_FEEDBACK

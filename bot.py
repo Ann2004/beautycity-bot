@@ -1,7 +1,12 @@
+import os
+import django
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'salon.settings')
+django.setup()
+
 from environs import Env
 from telegram.ext import ApplicationBuilder
 from ptb.handlers.conversation_handlers import conversation_handler
-
 
 def main():
     env = Env()

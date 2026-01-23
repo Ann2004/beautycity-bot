@@ -15,4 +15,6 @@
     CONFIRM_FEEDBACK_MENU,
     AFTER_FEEDBACK,
     OPD,
-) = range(16)
+    FEEDBACK_CLIENT_NAME,
+    FEEDBACK_CLIENT_PHONE,  
+) = range(18)

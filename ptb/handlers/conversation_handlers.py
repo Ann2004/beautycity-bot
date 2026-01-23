@@ -11,7 +11,7 @@ from .callback_handlers import (
     handler_phone_menu, handler_add_promo, handler_appointment_menu,
     handler_after_appointment, handler_master_menu, handler_master_feedback_menu,
     handler_feedback_menu, handler_confirm_feedback_menu, handler_after_feedback,
-    handler_opd_menu
+    handler_opd_menu, handler_feedback_client_name, handler_feedback_client_phone
 )
 from . import cmd_handlers, states_bot
 
@@ -36,7 +36,9 @@ conversation_handler = ConversationHandler(
         states_bot.CLIENT_FEEDBACK: [MessageHandler(filters.TEXT & ~filters.COMMAND, handler_feedback_menu)],
         states_bot.CONFIRM_FEEDBACK_MENU: [CallbackQueryHandler(handler_confirm_feedback_menu)],
         states_bot.AFTER_FEEDBACK: [CallbackQueryHandler(handler_after_feedback)],
-        states_bot.OPD: [CallbackQueryHandler(handler_opd_menu)]
+        states_bot.OPD: [CallbackQueryHandler(handler_opd_menu)],
+        states_bot.FEEDBACK_CLIENT_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, handler_feedback_client_name)],
+        states_bot.FEEDBACK_CLIENT_PHONE: [MessageHandler(filters.TEXT & ~filters.COMMAND, handler_feedback_client_phone)],
     },
     fallbacks=[CommandHandler('start', cmd_handlers.start)],
     per_message=False

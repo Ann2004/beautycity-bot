@@ -6,7 +6,8 @@ from salon.services import (
     get_staff_by_id, get_all_salons, get_all_services, get_services_by_staff,
     get_staff_busy_days, get_staff_available_slots, is_staff_available,
     find_available_master_for_slot, get_busy_days_for_salon_service,
-    get_available_slots_for_salon_service
+    get_available_slots_for_salon_service, get_promo_by_code,
+    get_service_by_id
 )
 
 
@@ -375,30 +376,61 @@ async def handler_appointment_menu(update, context):
 
     elif query.data == 'have_promocode':
         await query.message.edit_text(
-            'Введите промокод',
-            reply_markup=keyboard.back_to_appointment_menu()
+            'Введите промокод'
         )
         return states_bot.ADD_PROMO
 
 
 async def handler_add_promo(update, context):
-    if update.message and update.message.text:
-        context.user_data['promocode'] = update.message.text
+    promo_code = update.message.text
+    promo = await get_promo_by_code(promo_code)
+    
+    service_id = int(context.user_data['procedure_id'])
+    service = await get_service_by_id(service_id)
+
+    if not promo:
         text = (
-            f'Салон {context.user_data.get("salon_id", "id салона")}\n'
-            f'Процедура {context.user_data.get("procedure_id", "id процедуры")}\n'
-            f'Мастер {context.user_data.get("master_id", "id мастера")}\n'
-            f'Дата {context.user_data.get("date", "Дата")}\n'
-            f'Время {context.user_data.get("time", "Время")}\n'
-            f'Промокод {context.user_data.get("promocode", "Промокод")}\n\n'
-            'Стоимость xxxx*скидку промокода р.\n\n'
+            '❌ Промокод не найден.\n\n'
+            f'Процедура: {service.name}\n'
+            f'Дата: {context.user_data.get("date")}\n'
+            f'Время: {context.user_data.get("time")}\n'
+            f'Цена: {service.price} ₽\n\n'
             'Подтвердить запись?'
         )
+
         await update.message.reply_text(
             text=text,
             reply_markup=keyboard.appointment_menu()
         )
+
         return states_bot.APPOINTMENT
+
+    original_price = service.price
+    discount = promo.discount_percent
+    final_price = round(original_price * (100 - discount) / 100, 2)
+
+    context.user_data['promocode'] = promo.code
+    context.user_data['promo_id'] = promo.id
+    context.user_data['final_price'] = final_price
+
+    text = (
+        f'Салон: {context.user_data.get("salon_id")}\n'
+        f'Процедура: {service.name}\n'
+        f'Мастер: {context.user_data.get("master_id")}\n'
+        f'Дата: {context.user_data.get("date")}\n'
+        f'Время: {context.user_data.get("time")}\n\n'
+        f'Промокод: {promo.code} (-{promo.discount_percent}%)\n'
+        f'Цена без скидки: {original_price} ₽\n'
+        f'Цена со скидкой: {final_price} ₽\n\n'
+        'Подтвердить запись?'
+    )
+
+    await update.message.reply_text(
+        text=text,
+        reply_markup=keyboard.appointment_menu()
+    )
+
+    return states_bot.APPOINTMENT
 
 
 async def handler_after_appointment(update, context):

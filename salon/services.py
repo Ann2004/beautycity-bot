@@ -1,5 +1,5 @@
 from asgiref.sync import sync_to_async
-from salon.models import Client, Staff, Feedback, Salon, Service, Appointment
+from salon.models import Client, Staff, Feedback, Salon, Service, Appointment, Promo
 from datetime import date, timedelta
 
 
@@ -195,3 +195,13 @@ def get_busy_days_for_salon_service(salon_id: int, service_id: int, days_ahead: 
         busy_days_info[date_str].append(appointment.time.strftime('%H:%M'))
 
     return busy_days_info
+
+
+@sync_to_async
+def get_promo_by_code(code: str) -> Promo | None:
+    return Promo.objects.filter(code__iexact=code).first()
+
+
+@sync_to_async
+def get_service_by_id(service_id: int) -> Service:
+    return Service.objects.get(id=service_id)

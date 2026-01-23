@@ -46,3 +46,9 @@ def get_all_salons():
 @sync_to_async
 def get_all_services():
     return list(Service.objects.all())
+
+
+@sync_to_async
+def get_services_by_staff(staff_id):
+    staff = Staff.objects.prefetch_related('services').get(id=staff_id)
+    return list(staff.services.all())

@@ -3,7 +3,7 @@ from ptb.keyboards import keyboard
 
 from salon.services import ( 
     get_or_create_client, create_feedback, get_all_staff,
-    get_staff_by_id, get_all_salons, get_all_services
+    get_staff_by_id, get_all_salons, get_all_services, get_services_by_staff
 )
 
 
@@ -93,7 +93,7 @@ async def handler_procedure_menu(update, context):
 
         else:
             salons_list = await get_all_salons()
-            
+
             await query.message.edit_text(
                 'Выберите салон',
                 reply_markup=keyboard.salon_menu(salons_list)
@@ -291,9 +291,18 @@ async def handler_master_menu(update, context):
     await query.answer()
 
     if query.data.startswith('master_'):
-        procedures_list = await get_all_services()
+        master_id = query.data.split('_')[1]
+        context.user_data['master_id'] = master_id
 
-        context.user_data['master_id'] = query.data.split('_')[1]
+        procedures_list = await get_services_by_staff(int(master_id))  # услуги мастера
+
+        if not procedures_list:
+            await query.message.edit_text(
+                'У этого мастера пока нет доступных услуг.',
+                reply_markup=keyboard.back_to_main_menu()
+            )
+            return states_bot.MAIN_MENU
+
         await query.message.edit_text(
             'Выберите процедуру',
             reply_markup=keyboard.procedure_menu(procedures_list)

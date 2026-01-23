@@ -14,6 +14,13 @@ class Client(models.Model):
         null=True
     )
 
+    telegram_id = models.CharField(
+        verbose_name='Telegram ID',
+        max_length=20, 
+        blank=True,
+        null=True
+    )
+
     def __str__(self):
         return f'{self.name} ({self.phone})'
 

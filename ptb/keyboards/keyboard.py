@@ -183,3 +183,80 @@ def back_to_main_menu():
     ]
 
     return InlineKeyboardMarkup(keyboard)
+
+
+def date_menu_with_availability(busy_days_info, days_ahead=7):   # {'2024-01-01': ['10:00', '14:00'], ...}
+    today = datetime.now().date()
+    keyboard = []
+    days_added = 0
+    current_date = today
+
+    while days_added < days_ahead:
+        date_str = current_date.isoformat()
+        weekday = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вск'][current_date.weekday()]
+        date_display = current_date.strftime('%d.%m')
+
+        busy_slots = busy_days_info.get(date_str, [])
+        total_slots = 10  # с 10:00 до 20:00 = 10 слотов
+
+        if current_date == today:
+            text = 'Сегодня'
+        elif current_date == today + timedelta(days=1):
+            text = 'Завтра'
+        else:
+            text = f'{date_display} {weekday}'
+
+        free_slots = total_slots - len(busy_slots)
+        if free_slots > 0:
+            text += f' ({free_slots} слотов)'
+        else:
+            text += ' ❌'  # нет свободных слотов
+
+        callback_data = f'date_{date_str}'
+
+        # недоступно, если все слоты заняты
+        if len(busy_slots) >= total_slots:
+
+            keyboard.append([InlineKeyboardButton(
+                text=f'{text} (занято)',
+                callback_data='date_unavailable'
+            )])
+        else:
+            keyboard.append([InlineKeyboardButton(text, callback_data=callback_data)])
+
+        days_added += 1
+        current_date += timedelta(days=1)
+
+    keyboard.append([InlineKeyboardButton('Назад', callback_data='back_to_procedure')])
+
+    return InlineKeyboardMarkup(keyboard)
+
+
+def time_menu_with_availability(available_slots):
+    keyboard = []
+
+    for i in range(0, len(available_slots), 2):
+        row = []
+        row.append(InlineKeyboardButton(
+            available_slots[i],
+            callback_data=f'time_{available_slots[i]}'
+        ))
+
+        if i + 1 < len(available_slots):
+            row.append(InlineKeyboardButton(
+                available_slots[i + 1],
+                callback_data=f'time_{available_slots[i + 1]}'
+            ))
+
+        keyboard.append(row)
+
+    keyboard.append([InlineKeyboardButton('Назад', callback_data='back_to_date')])
+
+    return InlineKeyboardMarkup(keyboard)
+
+
+def back_to_procedure_menu():
+    keyboard = [
+        [InlineKeyboardButton('Назад к выбору процедуры', callback_data='back_to_procedure')]
+    ]
+    return InlineKeyboardMarkup(keyboard)

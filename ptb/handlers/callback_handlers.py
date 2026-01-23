@@ -3,7 +3,10 @@ from ptb.keyboards import keyboard
 
 from salon.services import ( 
     get_or_create_client, create_feedback, get_all_staff,
-    get_staff_by_id, get_all_salons, get_all_services, get_services_by_staff
+    get_staff_by_id, get_all_salons, get_all_services, get_services_by_staff,
+    get_staff_busy_days, get_staff_available_slots, is_staff_available,
+    find_available_master_for_slot, get_busy_days_for_salon_service,
+    get_available_slots_for_salon_service
 )
 
 
@@ -72,31 +75,51 @@ async def handler_procedure_menu(update, context):
     await query.answer()
 
     if query.data.startswith('procedure_'):
-        context.user_data['procedure_id'] = query.data.split('_')[1]
-        await query.message.edit_text(
-            'Выберите удобную вам дату',
-            reply_markup=keyboard.date_menu()
-        )
-        return states_bot.SELECT_DATE
+        selected_procedure_id = query.data.split('_')[1]
+        context.user_data['procedure_id'] = selected_procedure_id
+
+        selected_master_id = context.user_data.get('master_id')
+        selected_salon_id = context.user_data.get('salon_id')
+
+        if selected_master_id:
+            # запись через мастера
+            master_busy_days = await get_staff_busy_days(int(selected_master_id), days_ahead=7)
+
+            await query.message.edit_text(
+                'Выберите удобную дату',
+                reply_markup=keyboard.date_menu_with_availability(master_busy_days)
+            )
+            return states_bot.SELECT_DATE
+        elif selected_salon_id:
+            # запись через салон
+            salon_busy_days = await get_busy_days_for_salon_service(
+                int(selected_salon_id),
+                int(selected_procedure_id),
+                days_ahead=7
+            )
+
+            await query.message.edit_text(
+                'Выберите удобную дату',
+                reply_markup=keyboard.date_menu_with_availability(salon_busy_days)
+            )
+            return states_bot.SELECT_DATE
 
     elif query.data == 'back_to_salon':
-
         if context.user_data.get('master_id'):
-            master_list = await get_all_staff()
+            all_masters = await get_all_staff()
 
-            context.user_data.pop('master_id', None)
             await query.message.edit_text(
-                'Мастер, дата работы и салон',
-                reply_markup=keyboard.master_menu(master_list)
+                'Выберите мастера',
+                reply_markup=keyboard.master_menu(all_masters)
             )
             return states_bot.SELECT_MASTER
 
         else:
-            salons_list = await get_all_salons()
+            all_salons = await get_all_salons()
 
             await query.message.edit_text(
                 'Выберите салон',
-                reply_markup=keyboard.salon_menu(salons_list)
+                reply_markup=keyboard.salon_menu(all_salons)
             )
             return states_bot.SELECT_SALON
 
@@ -105,21 +128,74 @@ async def handler_date_menu(update, context):
     query = update.callback_query
     await query.answer()
 
-    if query.data.startswith('date_'):
-        context.user_data['date'] = query.data.split('_')[1]  # 'yyyy-mm-dd'
-        await query.message.edit_text(
-            'Выберите время',
-            reply_markup=keyboard.time_menu()
+    if query.data == 'date_unavailable':
+        await query.answer(
+            'На эту дату нет свободных слотов. Пожалуйста, выберите другую дату.',
+            show_alert=True
         )
-        return states_bot.SELECT_TIME
+        return states_bot.SELECT_DATE
+
+    elif query.data.startswith('date_'):
+        selected_date_str = query.data.split('_')[1]  # 'yyyy-mm-dd'
+        context.user_data['date'] = selected_date_str
+
+        selected_master_id = context.user_data.get('master_id')
+        selected_salon_id = context.user_data.get('salon_id')
+        selected_procedure_id = context.user_data.get('procedure_id')
+
+        if selected_master_id:
+            # запись через мастера
+            master_available_slots = await get_staff_available_slots(int(selected_master_id), selected_date_str)
+
+            if not master_available_slots:
+                await query.answer(
+                    'На эту дату у мастера нет свободного времени. Выберите другую дату.',
+                    show_alert=True
+                )
+                return states_bot.SELECT_DATE
+
+            await query.message.edit_text(
+                'Выберите время',
+                reply_markup=keyboard.time_menu_with_availability(master_available_slots)
+            )
+            return states_bot.SELECT_TIME
+        elif selected_salon_id and selected_procedure_id:
+            # запись через салон
+            salon_available_slots = await get_available_slots_for_salon_service(
+                int(selected_salon_id),
+                int(selected_procedure_id),
+                selected_date_str
+            )
+
+            if not salon_available_slots:
+                await query.answer(
+                    'На эту дату нет свободного времени для выбранной услуги. Выберите другую дату.',
+                    show_alert=True
+                )
+                return states_bot.SELECT_DATE
+
+            await query.message.edit_text(
+                'Выберите время',
+                reply_markup=keyboard.time_menu_with_availability(salon_available_slots)
+            )
+            return states_bot.SELECT_TIME
 
     elif query.data == 'back_to_procedure':
-        procedures_list = await get_all_services()
+        all_services = await get_all_services()
 
-        await query.message.edit_text(
-            'Выберите процедуру',
-            reply_markup=keyboard.procedure_menu(procedures_list)
-        )
+        # запись через мастера и его услуги
+        selected_master_id = context.user_data.get('master_id')
+        if selected_master_id:
+            master_services = await get_services_by_staff(int(selected_master_id))
+            await query.message.edit_text(
+                'Выберите процедуру',
+                reply_markup=keyboard.procedure_menu(master_services)
+            )
+        else:
+            await query.message.edit_text(
+                'Выберите процедуру',
+                reply_markup=keyboard.procedure_menu(all_services)
+            )
         return states_bot.SELECT_PROCEDURE
 
 
@@ -128,7 +204,52 @@ async def handler_time_menu(update, context):
     await query.answer()
 
     if query.data.startswith('time_'):
-        context.user_data['time'] = query.data.split('_')[1]  # 'hh:mm'
+        selected_time = query.data.split('_')[1]  # 'hh:mm'
+        selected_date = context.user_data.get('date')
+
+        # запись через мастера
+        master_id = context.user_data.get('master_id')
+        if master_id and selected_date:
+            is_available = await is_staff_available(
+                int(master_id),
+                selected_date,
+                selected_time
+            )
+
+            if not is_available:
+                await query.answer(
+                    'Это время уже занято. Пожалуйста, выберите другое время.',
+                    show_alert=True
+                )
+                return states_bot.SELECT_TIME
+
+            context.user_data['time'] = selected_time
+
+        # запись через салон
+        elif selected_date:
+            salon_id = context.user_data.get('salon_id')
+            service_id = context.user_data.get('procedure_id')
+
+            if salon_id and service_id:
+                # свободный мастер
+                available_master = await find_available_master_for_slot(
+                    int(salon_id),
+                    int(service_id),
+                    selected_date,
+                    selected_time
+                )
+
+                if not available_master:
+                    await query.answer(
+                        'Это время уже занято у всех мастеров. Выберите другое время.',
+                        show_alert=True
+                    )
+                    return states_bot.SELECT_TIME
+
+                context.user_data['master_id'] = str(available_master.id)
+                context.user_data['master_name'] = available_master.name
+                context.user_data['time'] = selected_time
+
         await query.delete_message()
         text = (
             'Нам нужно ваше согласие на обработку данных,'
@@ -143,10 +264,22 @@ async def handler_time_menu(update, context):
         return states_bot.OPD
 
     elif query.data == 'back_to_date':
-        await query.message.edit_text(
-            'Выберите удобную вам дату',
-            reply_markup=keyboard.date_menu()
-        )
+        master_id = context.user_data.get('master_id')
+
+        if master_id:
+            # меню даты с учетом занятости
+            busy_days_info = await get_staff_busy_days(int(master_id), days_ahead=7)
+
+            await query.message.edit_text(
+                'Выберите удобную дату',
+                reply_markup=keyboard.date_menu_with_availability(busy_days_info)
+            )
+        else:
+            # меню даты
+            await query.message.edit_text(
+                'Выберите удобную вам дату',
+                reply_markup=keyboard.date_menu()
+            )
         return states_bot.SELECT_DATE
 
 

@@ -123,6 +123,10 @@ class Appointment(models.Model):
         blank=True,
         verbose_name='Промокод'
     )
+    repeat_offer_sent = models.BooleanField(
+        default=False,
+        verbose_name='Отправлено предложение повторной записи'
+    )
     appointment_date = models.DateField(verbose_name='Дата')
     time = models.TimeField(verbose_name='Время')
 

@@ -185,6 +185,14 @@ def back_to_main_menu():
     return InlineKeyboardMarkup(keyboard)
 
 
+def to_main_menu():
+    keyboard = [
+        [InlineKeyboardButton('📅 Записаться', callback_data='/start')]
+    ]
+
+    return InlineKeyboardMarkup(keyboard)
+
+
 def date_menu_with_availability(busy_days_info, days_ahead=7):   # {'2024-01-01': ['10:00', '14:00'], ...}
     today = datetime.now().date()
     keyboard = []

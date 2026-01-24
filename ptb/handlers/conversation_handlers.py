@@ -15,6 +15,10 @@ from .callback_handlers import (
 )
 from . import cmd_handlers, states_bot
 
+back_to_main_handler = CallbackQueryHandler(
+    handler_after_appointment,
+    pattern='^back_to_main$'
+)
 
 conversation_handler = ConversationHandler(
     entry_points=[
@@ -40,6 +44,8 @@ conversation_handler = ConversationHandler(
         states_bot.FEEDBACK_CLIENT_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, handler_feedback_client_name)],
         states_bot.FEEDBACK_CLIENT_PHONE: [MessageHandler(filters.TEXT & ~filters.COMMAND, handler_feedback_client_phone)],
     },
-    fallbacks=[CommandHandler('start', cmd_handlers.start)],
-    per_message=False
+    fallbacks=[
+        CommandHandler('start', cmd_handlers.start),
+        back_to_main_handler
+    ]
 )

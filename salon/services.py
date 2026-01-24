@@ -243,3 +243,14 @@ def create_appointment(
         time=time,
         promo=promo
     )
+
+
+def get_appointments_for_repeat_offer():
+    today = date.today()
+    target_date = today - timedelta(days=100)
+
+    return Appointment.objects.filter(
+        appointment_date=target_date,
+        repeat_offer_sent=False,
+        client__telegram_id__isnull=False
+    )

@@ -343,7 +343,11 @@ async def handler_phone_menu(update, context):
         context.user_data['phone'] = update.message.text
         service = context.user_data['service']
         master = context.user_data['master']
-        salon = context.user_data.get('salon') or master.salon
+        salon = context.user_data.get('salon')
+
+        if not salon and master:
+            salon = master.salon
+
         text = (
             f'Салон: {salon.address}\n'
             f'Процедура: {service.name}\n'

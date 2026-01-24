@@ -116,6 +116,13 @@ class Appointment(models.Model):
         on_delete=models.CASCADE,
         verbose_name='Мастер'
     )
+    promo = models.ForeignKey(
+        Promo,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Промокод'
+    )
     appointment_date = models.DateField(verbose_name='Дата')
     time = models.TimeField(verbose_name='Время')
 

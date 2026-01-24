@@ -187,7 +187,7 @@ def back_to_main_menu():
 
 def to_main_menu():
     keyboard = [
-        [InlineKeyboardButton('📅 Записаться', callback_data='/start')]
+        [InlineKeyboardButton('📅 Записаться', url=f't.me/beautycityy_bot?start=menu')]
     ]
 
     return InlineKeyboardMarkup(keyboard)

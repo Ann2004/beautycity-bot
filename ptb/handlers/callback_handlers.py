@@ -1,13 +1,17 @@
+from doctest import master
+from multiprocessing import context
+
+import salon
 from . import states_bot
 from ptb.keyboards import keyboard
 
 from salon.services import ( 
-    get_or_create_client, create_feedback, get_all_staff,
+    get_or_create_client, create_feedback, get_all_staff, get_salon_by_id,
     get_staff_by_id, get_all_salons, get_all_services, get_services_by_staff,
     get_staff_busy_days, get_staff_available_slots, is_staff_available,
     find_available_master_for_slot, get_busy_days_for_salon_service,
     get_available_slots_for_salon_service, get_promo_by_code,
-    get_service_by_id
+    get_service_by_id, create_appointment
 )
 
 
@@ -50,7 +54,12 @@ async def handler_salon_menu(update, context):
     if query.data.startswith('salon_'):
         procedures_list = await get_all_services()
 
-        context.user_data['salon_id'] = query.data.split('_')[1]  # сохранение id для удобства
+        salon_id = int(query.data.split('_')[1])
+        context.user_data['salon_id'] = salon_id
+
+        salon = await get_salon_by_id(salon_id)
+        context.user_data['salon'] = salon
+
         await query.message.edit_text(
             'Выберите процедуру',
             reply_markup=keyboard.procedure_menu(procedures_list)
@@ -78,6 +87,9 @@ async def handler_procedure_menu(update, context):
     if query.data.startswith('procedure_'):
         selected_procedure_id = query.data.split('_')[1]
         context.user_data['procedure_id'] = selected_procedure_id
+
+        service = await get_service_by_id(int(selected_procedure_id))
+        context.user_data['service'] = service
 
         selected_master_id = context.user_data.get('master_id')
         selected_salon_id = context.user_data.get('salon_id')
@@ -249,6 +261,7 @@ async def handler_time_menu(update, context):
 
                 context.user_data['master_id'] = str(available_master.id)
                 context.user_data['master_name'] = available_master.name
+                context.user_data['master'] = available_master
                 context.user_data['time'] = selected_time
 
         await query.delete_message()
@@ -328,13 +341,16 @@ async def handler_phone_menu(update, context):
 
     if len(phone) == 11 and phone[0] in ['7', '8']:
         context.user_data['phone'] = update.message.text
+        service = context.user_data['service']
+        master = context.user_data['master']
+        salon = context.user_data.get('salon') or master.salon
         text = (
-            f'Салон {context.user_data.get("salon_id", "id салона")}\n'
-            f'Процедура {context.user_data.get("procedure_id", "id процедуры")}\n'
-            f'Мастер {context.user_data.get("master_id", "id мастера")}\n'
-            f'Дата {context.user_data.get("date", "Дата")}\n'
-            f'Время {context.user_data.get("time", "Время")}\n\n'
-            'Стоимость xxxx р.\n\n'
+            f'Салон: {salon.address}\n'
+            f'Процедура: {service.name}\n'
+            f'Мастер: {master.name}\n'
+            f'Дата: {context.user_data.get("date", "Дата")}\n'
+            f'Время: {context.user_data.get("time", "Время")}\n\n'
+            f'Стоимость: {service.price} ₽\n\n'
             'Подтвердить запись?'
         )
         await update.message.reply_text(
@@ -358,11 +374,28 @@ async def handler_appointment_menu(update, context):
     await query.answer()
 
     if query.data == 'confirm_appointment':
+        client = await get_or_create_client(
+            name=context.user_data['name'],
+            phone=context.user_data['phone'],
+            telegram_id=update.effective_user.id
+        )
+
+        service = context.user_data['service']
+        staff = context.user_data['master']
+        promo = context.user_data.get('promo')
+
+        await create_appointment(
+            client=client,
+            service=service,
+            staff=staff,
+            appointment_date=context.user_data['date'],
+            time=context.user_data['time'],
+            promo=promo
+        )
         await query.message.edit_text(
-            'Запись подтверждена',
+            '✅ Запись подтверждена!',
             reply_markup=keyboard.back_to_main_menu()
         )
-        # тут нужно сохранить в бд
         context.user_data.clear()
         return states_bot.AFTER_APPOINTMENT
 
@@ -385,13 +418,16 @@ async def handler_add_promo(update, context):
     promo_code = update.message.text
     promo = await get_promo_by_code(promo_code)
     
-    service_id = int(context.user_data['procedure_id'])
-    service = await get_service_by_id(service_id)
+    service = context.user_data['service']
+    master = context.user_data['master']
+    salon = context.user_data.get('salon') or master.salon
 
     if not promo:
         text = (
             '❌ Промокод не найден.\n\n'
+            f'Салон: {salon.address}\n'
             f'Процедура: {service.name}\n'
+            f'Мастер: {master.name}\n'
             f'Дата: {context.user_data.get("date")}\n'
             f'Время: {context.user_data.get("time")}\n'
             f'Цена: {service.price} ₽\n\n'
@@ -409,14 +445,13 @@ async def handler_add_promo(update, context):
     discount = promo.discount_percent
     final_price = round(original_price * (100 - discount) / 100, 2)
 
-    context.user_data['promocode'] = promo.code
-    context.user_data['promo_id'] = promo.id
+    context.user_data['promo'] = promo
     context.user_data['final_price'] = final_price
 
     text = (
-        f'Салон: {context.user_data.get("salon_id")}\n'
+        f'Салон: {salon.address}\n'
         f'Процедура: {service.name}\n'
-        f'Мастер: {context.user_data.get("master_id")}\n'
+        f'Мастер: {master.name}\n'
         f'Дата: {context.user_data.get("date")}\n'
         f'Время: {context.user_data.get("time")}\n\n'
         f'Промокод: {promo.code} (-{promo.discount_percent}%)\n'
@@ -458,6 +493,9 @@ async def handler_master_menu(update, context):
     if query.data.startswith('master_'):
         master_id = query.data.split('_')[1]
         context.user_data['master_id'] = master_id
+
+        master = await get_staff_by_id(int(master_id))
+        context.user_data['master'] = master
 
         procedures_list = await get_services_by_staff(int(master_id))  # услуги мастера
 
@@ -564,7 +602,8 @@ async def handler_confirm_feedback_menu(update, context):
     if query.data == 'send':
         client = await get_or_create_client(
             name=context.user_data['feedback_name'],
-            phone=context.user_data['feedback_phone']
+            phone=context.user_data['feedback_phone'],
+            telegram_id=update.effective_user.id
         )
 
         await create_feedback(

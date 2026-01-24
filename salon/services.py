@@ -4,11 +4,24 @@ from datetime import date, timedelta
 
 
 @sync_to_async
-def get_or_create_client(name: str, phone: str) -> Client:
-    client, _ = Client.objects.get_or_create(
+def get_or_create_client(
+    name: str,
+    phone: str,
+    telegram_id: int | None = None
+) -> Client:
+    client, created = Client.objects.get_or_create(
         phone=phone,
-        defaults={'name': name}
+        defaults={
+            'name': name,
+            'telegram_id': str(telegram_id) if telegram_id else None
+        }
     )
+
+    # если клиент уже был, но telegram_id ещё не сохранён
+    if not created and telegram_id and not client.telegram_id:
+        client.telegram_id = str(telegram_id)
+        client.save(update_fields=['telegram_id'])
+
     return client
 
 
@@ -35,8 +48,13 @@ def get_all_staff():
 
 
 @sync_to_async
-def get_staff_by_id(staff_id: int) -> Staff:
-    return Staff.objects.filter(id=staff_id).first()
+def get_staff_by_id(staff_id: int):
+    return Staff.objects.select_related('salon').get(id=staff_id)
+
+
+@sync_to_async
+def get_salon_by_id(salon_id: int) -> Salon:
+    return Salon.objects.filter(id=salon_id).first()
 
 
 @sync_to_async
@@ -205,3 +223,23 @@ def get_promo_by_code(code: str) -> Promo | None:
 @sync_to_async
 def get_service_by_id(service_id: int) -> Service:
     return Service.objects.get(id=service_id)
+
+
+@sync_to_async
+def create_appointment(
+    *,
+    client: Client,
+    service: Service,
+    staff: Staff,
+    appointment_date,
+    time,
+    promo: Promo | None = None
+) -> Appointment:
+    return Appointment.objects.create(
+        client=client,
+        service=service,
+        staff=staff,
+        appointment_date=appointment_date,
+        time=time,
+        promo=promo
+    )

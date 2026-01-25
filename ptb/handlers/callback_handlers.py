@@ -137,14 +137,7 @@ async def handler_date_menu(update, context):
     query = update.callback_query
     await query.answer()
 
-    if query.data == 'date_unavailable':
-        await query.answer(
-            'На эту дату нет свободных слотов. Пожалуйста, выберите другую дату.',
-            show_alert=True
-        )
-        return states_bot.SELECT_DATE
-
-    elif query.data.startswith('date_'):
+    if query.data.startswith('date_'):
         selected_date_str = query.data.split('_')[1]  # 'yyyy-mm-dd'
         context.user_data['date'] = selected_date_str
 

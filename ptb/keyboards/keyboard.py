@@ -120,43 +120,10 @@ def date_menu():
     return InlineKeyboardMarkup(keyboard)
 
 
-def time_menu():
-    now = datetime.now()
-    current_hour = now.hour
-
-    times = []
-    for hour in range(10, 20):
-        if hour > current_hour:
-            times.append(f"{hour:02d}:00")
-
-    keyboard = []
-
-    for i in range(0, len(times), 2):
-        row = []
-        row.append(InlineKeyboardButton(times[i], callback_data=f'time_{times[i]}'))
-
-        if i + 1 < len(times):
-            row.append(InlineKeyboardButton(times[i+1], callback_data=f'time_{times[i+1]}'))
-
-        keyboard.append(row)
-
-    keyboard.append([InlineKeyboardButton('Назад', callback_data='back_to_date')])
-
-    return InlineKeyboardMarkup(keyboard)
-
-
 def opd_menu():
     keyboard = [
         [InlineKeyboardButton('Согласиться', callback_data='agree')],
         [InlineKeyboardButton('Отказаться', callback_data='disagree')]
-    ]
-
-    return InlineKeyboardMarkup(keyboard)
-
-
-def promocode_menu():
-    keyboard = [
-        [InlineKeyboardButton('Пропустить', callback_data='skip_promo')]
     ]
 
     return InlineKeyboardMarkup(keyboard)
@@ -179,12 +146,6 @@ def appointment_with_promocode_menu():
     ]
 
     return InlineKeyboardMarkup(keyboard)
-
-
-def back_to_appointment_menu():
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton('Назад', callback_data='back_to_appointment')]
-    ])
 
 
 def back_to_main_menu():
@@ -214,9 +175,6 @@ def date_menu_with_availability(busy_days_info, days_ahead=7):   # {'2024-01-01'
         weekday = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вск'][current_date.weekday()]
         date_display = current_date.strftime('%d.%m')
 
-        busy_slots = busy_days_info.get(date_str, [])
-        total_slots = 10  # с 10:00 до 20:00 = 10 слотов
-
         if current_date == today:
             text = 'Сегодня'
         elif current_date == today + timedelta(days=1):
@@ -224,23 +182,9 @@ def date_menu_with_availability(busy_days_info, days_ahead=7):   # {'2024-01-01'
         else:
             text = f'{date_display} {weekday}'
 
-        free_slots = total_slots - len(busy_slots)
-        if free_slots > 0:
-            text += f' ({free_slots} слотов)'
-        else:
-            text += ' ❌'  # нет свободных слотов
-
         callback_data = f'date_{date_str}'
 
-        # недоступно, если все слоты заняты
-        if len(busy_slots) >= total_slots:
-
-            keyboard.append([InlineKeyboardButton(
-                text=f'{text} (занято)',
-                callback_data='date_unavailable'
-            )])
-        else:
-            keyboard.append([InlineKeyboardButton(text, callback_data=callback_data)])
+        keyboard.append([InlineKeyboardButton(text, callback_data=callback_data)])
 
         days_added += 1
         current_date += timedelta(days=1)

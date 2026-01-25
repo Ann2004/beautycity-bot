@@ -121,24 +121,14 @@ def date_menu():
 
 
 def time_menu():
-    now = datetime.now()
-    current_hour = now.hour
-
-    times = []
-    for hour in range(10, 20):
-        if hour > current_hour:
-            times.append(f"{hour:02d}:00")
-
-    keyboard = []
-
-    for i in range(0, len(times), 2):
-        row = []
-        row.append(InlineKeyboardButton(times[i], callback_data=f'time_{times[i]}'))
-
-        if i + 1 < len(times):
-            row.append(InlineKeyboardButton(times[i+1], callback_data=f'time_{times[i+1]}'))
-
-        keyboard.append(row)
+    times = [f"{hour:02d}:00" for hour in range(10, 20)]
+    keyboard = [
+        [
+            InlineKeyboardButton(times[i], callback_data=f'time_{times[i]}'),
+            InlineKeyboardButton(times[i+1], callback_data=f'time_{times[i+1]}')
+        ]
+        for i in range(0, len(times), 2)
+    ]
 
     keyboard.append([InlineKeyboardButton('Назад', callback_data='back_to_date')])
 
@@ -250,35 +240,20 @@ def date_menu_with_availability(busy_days_info, days_ahead=7):   # {'2024-01-01'
     return InlineKeyboardMarkup(keyboard)
 
 
-def time_menu_with_availability(available_slots, selected_date_str=None):
+def time_menu_with_availability(available_slots):
     keyboard = []
 
-    filtered_slots = available_slots
-    if selected_date_str:
-        today = datetime.now().date()
-        selected_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
-
-        if selected_date == today:
-            now = datetime.now()
-            current_hour = now.hour
-
-            filtered_slots = []
-            for slot in available_slots:
-                slot_hour = int(slot.split(':')[0])
-                if slot_hour > current_hour:
-                    filtered_slots.append(slot)
-
-    for i in range(0, len(filtered_slots), 2):
+    for i in range(0, len(available_slots), 2):
         row = []
         row.append(InlineKeyboardButton(
-            filtered_slots[i],
-            callback_data=f'time_{filtered_slots[i]}'
+            available_slots[i],
+            callback_data=f'time_{available_slots[i]}'
         ))
 
-        if i + 1 < len(filtered_slots):
+        if i + 1 < len(available_slots):
             row.append(InlineKeyboardButton(
-                filtered_slots[i + 1],
-                callback_data=f'time_{filtered_slots[i + 1]}'
+                available_slots[i + 1],
+                callback_data=f'time_{available_slots[i + 1]}'
             ))
 
         keyboard.append(row)

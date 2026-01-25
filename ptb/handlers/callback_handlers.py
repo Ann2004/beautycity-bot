@@ -1,11 +1,7 @@
-from doctest import master
-from multiprocessing import context
-
-import salon
 from . import states_bot
 from ptb.keyboards import keyboard
 
-from salon.services import ( 
+from salon.services import (
     get_or_create_client, create_feedback, get_all_staff, get_salon_by_id,
     get_staff_by_id, get_all_salons, get_all_services, get_services_by_staff,
     get_staff_busy_days, get_staff_available_slots, is_staff_available,
@@ -169,7 +165,7 @@ async def handler_date_menu(update, context):
 
             await query.message.edit_text(
                 'Выберите время',
-                reply_markup=keyboard.time_menu_with_availability(master_available_slots)
+                reply_markup=keyboard.time_menu_with_availability(master_available_slots, selected_date_str)
             )
             return states_bot.SELECT_TIME
         elif selected_salon_id and selected_procedure_id:
@@ -189,7 +185,7 @@ async def handler_date_menu(update, context):
 
             await query.message.edit_text(
                 'Выберите время',
-                reply_markup=keyboard.time_menu_with_availability(salon_available_slots)
+                reply_markup=keyboard.time_menu_with_availability(salon_available_slots, selected_date_str)
             )
             return states_bot.SELECT_TIME
 
@@ -421,7 +417,7 @@ async def handler_appointment_menu(update, context):
 async def handler_add_promo(update, context):
     promo_code = update.message.text
     promo = await get_promo_by_code(promo_code)
-    
+
     service = context.user_data['service']
     master = context.user_data['master']
     salon = context.user_data.get('salon') or master.salon

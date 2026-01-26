@@ -68,7 +68,7 @@ def feedback_staff_menu(staff_list):
 
 def confirm_feedback():
     keyboard = [
-        [InlineKeyboardButton('Отравить', callback_data='send')],
+        [InlineKeyboardButton('Отправить', callback_data='send')],
         [InlineKeyboardButton('Отменить', callback_data='cancel')]
     ]
 
@@ -131,7 +131,7 @@ def opd_menu():
 
 def appointment_menu():
     keyboard = [
-        [InlineKeyboardButton('Подтвердрить запись', callback_data='confirm_appointment')],
+        [InlineKeyboardButton('Подтвердить запись', callback_data='confirm_appointment')],
         [InlineKeyboardButton('Отменить запись', callback_data='cancel_appointment')]
     ]
 
@@ -140,7 +140,7 @@ def appointment_menu():
 
 def appointment_with_promocode_menu():
     keyboard = [
-        [InlineKeyboardButton('Подтвердрить запись', callback_data='confirm_appointment')],
+        [InlineKeyboardButton('Подтвердить запись', callback_data='confirm_appointment')],
         [InlineKeyboardButton('У меня есть промокод', callback_data='have_promocode')],
         [InlineKeyboardButton('Отменить запись', callback_data='cancel_appointment')]
     ]
@@ -166,6 +166,7 @@ def to_main_menu():
 
 def date_menu_with_availability(busy_days_info, days_ahead=7):   # {'2024-01-01': ['10:00', '14:00'], ...}
     today = datetime.now().date()
+    current_time = datetime.now().time()
     keyboard = []
     days_added = 0
     current_date = today
@@ -175,16 +176,42 @@ def date_menu_with_availability(busy_days_info, days_ahead=7):   # {'2024-01-01'
         weekday = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вск'][current_date.weekday()]
         date_display = current_date.strftime('%d.%m')
 
-        if current_date == today:
-            text = 'Сегодня'
-        elif current_date == today + timedelta(days=1):
-            text = 'Завтра'
-        else:
-            text = f'{date_display} {weekday}'
+        # для текущего дня
+        is_today = current_date == today
+        skip_day = False
 
-        callback_data = f'date_{date_str}'
+        if is_today and date_str in busy_days_info:
+            # фильтрация прошедших интервалов
+            available_times = []
+            for time_slot in busy_days_info[date_str]:
+                time_parts = time_slot.split(':')
+                if len(time_parts) == 2:
+                    hour = int(time_parts[0])
+                    minute = int(time_parts[1])
+                    slot_time = datetime.combine(current_date, datetime.min.time()).replace(hour=hour, minute=minute).time()
+                    if slot_time > current_time:
+                        available_times.append(time_slot)
 
-        keyboard.append([InlineKeyboardButton(text, callback_data=callback_data)])
+            # пропуск дня, если вышло за 19:00
+            if not available_times:
+                skip_day = True
+
+        if not skip_day:
+            if current_date == today:
+                text = 'Сегодня'
+            elif current_date == today + timedelta(days=1):
+                text = 'Завтра'
+            else:
+                text = f'{date_display} {weekday}'
+
+            # день полностью забит
+            if date_str in busy_days_info and len(busy_days_info[date_str]) == 0 and not is_today:
+                text = f'{text} ❌'
+                callback_data = 'unavailable'
+            else:
+                callback_data = f'date_{date_str}'
+
+            keyboard.append([InlineKeyboardButton(text, callback_data=callback_data)])
 
         days_added += 1
         current_date += timedelta(days=1)
@@ -204,13 +231,19 @@ def time_menu_with_availability(available_slots, selected_date_str=None):
 
         if selected_date == today:
             now = datetime.now()
-            current_hour = now.hour
+            current_time = now.time()
 
             filtered_slots = []
             for slot in available_slots:
-                slot_hour = int(slot.split(':')[0])
-                if slot_hour > current_hour:
-                    filtered_slots.append(slot)
+                # парсинг 'hh:mm'
+                slot_parts = slot.split(':')
+                if len(slot_parts) == 2:
+                    slot_hour = int(slot_parts[0])
+                    slot_minute = int(slot_parts[1])
+                    slot_time = datetime.combine(today, datetime.min.time()).replace(hour=slot_hour, minute=slot_minute).time()
+
+                    if slot_time > current_time:
+                        filtered_slots.append(slot)
 
     for i in range(0, len(filtered_slots), 2):
         row = []

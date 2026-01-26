@@ -28,7 +28,7 @@ async def handler_main_menu(update, context):
         staff_list = await get_all_staff()
 
         await query.message.edit_text(
-            text='Мастер, дата работы и салон',
+            text='Выберите мастера',
             reply_markup=keyboard.master_menu(staff_list)
         )
         return states_bot.SELECT_MASTER
